@@ -64,7 +64,11 @@ def main():
                                        post_limit_count)
                 last_new_post_time = submission.created_utc
 
-        time.sleep(loop_delay)
+        try:
+            time.sleep(loop_delay)
+        except KeyboardInterrupt:
+            print ('..exiting')
+            sys.exit(0)
 
 
 def check_user_submissions(subreddit, submission, limit_hours, limit_posts):
