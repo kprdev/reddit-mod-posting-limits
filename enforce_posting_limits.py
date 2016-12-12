@@ -87,12 +87,17 @@ def check_user_submissions(subreddit, submission, limit_hours, limit_posts):
                  username, count, limit_hours)
     
     if count > limit_posts:
-        logging.info('Removing the post')
+        logging.info('Removing the post.')
         try:
             subreddit.mod.remove(submission)
         except Exception as e:
             # If the login user isn't permitted to remove posts, don't stop
-            print (e)
+            if e.response.status_code == 403:
+                logging.error('The current username does not have permission '
+                              'to remove submissions! Verify the login '
+                              'is correct and has subreddit mod access.')
+            else:
+                raise e
         else:
             msg_link = "/message/compose/?to=/"+subreddit._path
             reply_text = (
