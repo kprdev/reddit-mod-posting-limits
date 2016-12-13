@@ -82,9 +82,13 @@ def check_user_submissions(subreddit, submission, limit_hours, limit_posts):
     user_submissions = list(subreddit.submissions(start_time, stop_time, params))
     # Count includes the post excluded earlier
     count = len(user_submissions) + 1 
+    for i, submission in enumerate(user_submissions, start=1):
+        stamp = time.strftime("%a, %d %b %Y %H:%M:%S %Z",
+                              time.gmtime(submission.created_utc))
+        logging.info('Previous post %d/%d: %s "%s"', i, count-1,
+                     stamp, submission.title)
     
-    logging.info('User "%s" post count is %d in the last %d hours.',
-                 username, count, limit_hours)
+    logging.info('%d hour post count: %d', limit_hours, count)
     
     if count > limit_posts:
         logging.info('Removing the post.')
