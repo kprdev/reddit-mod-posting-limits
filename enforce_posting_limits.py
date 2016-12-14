@@ -83,15 +83,15 @@ def check_user_submissions(subreddit, submission, limit_hours, limit_posts):
     # Count includes the post excluded earlier
     count = len(user_submissions) + 1 
     for i, submission in enumerate(user_submissions, start=1):
-        stamp = time.strftime("%a, %d %b %Y %H:%M:%S %Z",
+        stamp = time.strftime("%Y-%m-%d %H:%M:%S %Z",
                               time.gmtime(submission.created_utc))
-        logging.info('Previous post %d/%d: %s "%s"', i, count-1,
-                     stamp, submission.title)
+        link = 'https://redd.it/' + submission.id
+        logging.info('Old post: %s, (%d/%d) "%s", %s', stamp, i, count-1,
+                     submission.title, link)
     
     logging.info('%d hour post count: %d', limit_hours, count)
     
     if count > limit_posts:
-        logging.info('Removing the post.')
         try:
             subreddit.mod.remove(submission)
         except Exception as e:
@@ -103,13 +103,14 @@ def check_user_submissions(subreddit, submission, limit_hours, limit_posts):
             else:
                 raise e
         else:
-            msg_link = "/message/compose/?to=/"+subreddit._path
+            logging.info('"%s" removed.', submission.title)
+            msg_link = "/message/compose/?to=/" + subreddit._path
             reply_text = (
                 "Your submission was automatically removed because you have "
                 "exceeded **{}** submissions within the last **{}** hours.\n\n"
                 "*I am a bot, and this action was performed automatically. "
                 "Please [contact the moderators of this subreddit]"
-                "("+msg_link+") if you have questions or "
+                "(" + msg_link + ") if you have questions or "
                 "concerns.*").format(limit_posts, limit_hours)
             submission.reply(reply_text)
 
