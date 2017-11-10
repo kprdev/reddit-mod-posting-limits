@@ -6,6 +6,8 @@ import praw
 import prawcore
 from pprint import pprint
 
+# Set to True to test, posts won't be removed
+POST_TEST_MODE = False
 
 def main():
     # SET THESE - reddit application configuration
@@ -139,7 +141,7 @@ def check_post_limits(subreddit, submission, limit_hours, limit_posts):
     count += 1
     logging.info('%d hour post count: %d', limit_hours, count)
     
-    if count > limit_posts:
+    if count > limit_posts and not POST_TEST_MODE:
         try:
             subreddit.mod.remove(submission)
         except Exception as e:
