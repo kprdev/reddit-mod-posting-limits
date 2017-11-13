@@ -141,7 +141,9 @@ def check_post_limits(subreddit, submission, limit_hours, limit_posts):
     count += 1
     logging.info('%d hour post count: %d', limit_hours, count)
     
-    if count > limit_posts and not POST_TEST_MODE:
+    if count > limit_posts and POST_TEST_MODE:
+        logging.info('Test mode is ON. Post not removed.')
+    elif count > limit_posts and not POST_TEST_MODE:
         try:
             submission.mod.remove()
         except Exception as e:
