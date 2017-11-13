@@ -143,7 +143,7 @@ def check_post_limits(subreddit, submission, limit_hours, limit_posts):
     
     if count > limit_posts and not POST_TEST_MODE:
         try:
-            subreddit.mod.remove(submission)
+            submission.mod.remove()
         except Exception as e:
             # If the login user isn't permitted to remove posts, don't stop
             if e.response.status_code == 403:
