@@ -19,8 +19,8 @@ def main():
     
     # SET THESE - Customize these for your subreddit.
     subreddit_name = ''
-    post_limit_count = 2
-    post_limit_hours = 4
+    post_limit_count = 4
+    post_limit_hours = 24
     
     logging.basicConfig(
         format='%(asctime)s %(levelname)s %(message)s',
