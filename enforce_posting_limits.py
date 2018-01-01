@@ -155,9 +155,11 @@ def check_post_limits(subreddit, submission, limit_hours, limit_posts):
             else:
                 raise e
         else:
+            name = "u/" + submission.author.name
             logging.info('"%s" removed.', submission.title)
             msg_link = "/message/compose/?to=/" + subreddit._path
             reply_text = (
+                "Hi " + name + ",\n\n"
                 "Your submission was automatically removed because you have "
                 "exceeded **{}** submissions within the last **{}** hours.\n\n"
                 "*I am a bot, and this action was performed automatically. "
