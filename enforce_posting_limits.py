@@ -55,8 +55,6 @@ def check_subreddit(subreddit, post_limit_count, post_limit_hours):
                 submissions = subreddit.new(limit=max_new_submissions)
                 new_submissions = []
                 for submission in submissions:
-                    # Window to give the cache a chance to update.
-                    caching_window = 45
                     # New submissions will come in newest first.
                     # Save the ones newer than last_new_post_time.
                     if submission.created_utc > search_time:
