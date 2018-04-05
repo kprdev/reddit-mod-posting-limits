@@ -27,15 +27,16 @@ def main():
         level=logging.INFO
     )
     
-    logging.info('Watching subreddit: %s', subreddit_name)
-    logging.info('Current limit set to %d posts in %d hours',
-                 post_limit_count, post_limit_hours)
-
     reddit = praw.Reddit(user_agent=user_agent,
                          client_id=client_id,
                          client_secret=client_secret,
                          username=username,
                          password=password)
+    
+    logging.info('Watching subreddit: %s', subreddit_name)
+    logging.info('Current limit set to %d posts in %d hours',
+                 post_limit_count, post_limit_hours)
+    
     subreddit = reddit.subreddit(subreddit_name)
     check_subreddit(subreddit, post_limit_count, post_limit_hours)
 
