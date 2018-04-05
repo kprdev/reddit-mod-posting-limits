@@ -119,14 +119,13 @@ def check_post_limits(subreddit, submission, limit_hours, limit_posts):
     username = submission.author.name
     
     params = "author:'" + username + "'"
-    while True:
-        try:
-            user_submissions = list(subreddit.submissions(start_time, stop_time, params))
-            break
-        except Exception as e:
-            print (e)
-            time.sleep(60)
-            
+    try:
+        user_submissions = list(subreddit.submissions(start_time, stop_time, params))
+    except Exception as e:
+        logging.error(e)
+        logging.error('Reddit is having issues, giving up on this one.')
+        return
+    
     count = len(user_submissions)
     for i, user_submission in enumerate(user_submissions, start=1):
         stamp = time.strftime("%Y-%m-%d %H:%M:%S %Z",
