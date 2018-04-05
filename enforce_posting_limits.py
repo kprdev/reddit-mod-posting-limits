@@ -85,7 +85,7 @@ def check_subreddit(subreddit, post_limit_count, post_limit_hours):
             for submission in new_submissions:
                 stamp = time.strftime("%a, %d %b %Y %H:%M:%S %Z",
                                       time.gmtime(submission.created_utc))
-                link = 'https://redd.it' + submission.id
+                link = 'https://redd.it/' + submission.id
                 logging.info('New post: %s, "%s" by "%s", %s', stamp,
                              submission.title, submission.author.name, link)
                 
