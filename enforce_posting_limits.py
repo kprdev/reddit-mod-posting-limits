@@ -128,7 +128,10 @@ def check_post_limits(subreddit, orig_submission, limit_hours, limit_posts):
     # Filter down to the limit period
     search_submissions = []
     for s in user_submissions:
-        if s.created_utc > cutoff_time:
+        if (s.created_utc > cutoff_time
+            # Exclude the current post from the range check since reddit
+            # sometimes misses it (cache?). It will be added later.
+                and s.created_utc < orig_submission.created_utc):
             search_submissions.append(s)
     
     count = len(search_submissions)
@@ -139,6 +142,8 @@ def check_post_limits(subreddit, orig_submission, limit_hours, limit_posts):
         logging.info('Post history: %s, (%d/%d) "%s", %s', stamp, i, count,
                      s.title, link)
     
+    # Include the excluded post
+    count += 1
     logging.info('%d hour post count: %d', limit_hours, count)
     
     if count > limit_posts and POST_TEST_MODE:
