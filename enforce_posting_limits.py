@@ -108,34 +108,37 @@ def check_subreddit(subreddit, post_limit_count, post_limit_hours):
             sys.exit(0)
 
 
-def check_post_limits(subreddit, submission, limit_hours, limit_posts):
-    # provide a small window for less strict checking
+def check_post_limits(subreddit, orig_submission, limit_hours, limit_posts):
     buffer_seconds = 600
+    cutoff_time = (orig_submission.created_utc 
+                   - (limit_hours * 60 * 60) 
+                   + buffer_seconds)
+    username = orig_submission.author.name
     
-    start_time = submission.created_utc - (limit_hours * 60 * 60) + buffer_seconds
-    # Exclude the current post from the range check since reddit sometimes
-    # doesn't include it (cache?). We will add it in manually later.
-    stop_time = submission.created_utc - 1
-    username = submission.author.name
-    
-    params = "author:'" + username + "'"
+    params = "author:" + username
     try:
-        user_submissions = list(subreddit.submissions(start_time, stop_time, params))
+        user_submissions = list(
+            subreddit.search(params, 'new', 'lucene', 'week')
+        )
     except Exception as e:
         logging.error(e)
-        logging.error('Reddit is having issues, giving up on this one.')
+        logging.error('Search failed!')
         return
     
-    count = len(user_submissions)
-    for i, user_submission in enumerate(user_submissions, start=1):
-        stamp = time.strftime("%Y-%m-%d %H:%M:%S %Z",
-                              time.gmtime(user_submission.created_utc))
-        link = 'https://redd.it/' + user_submission.id
-        logging.info('Old post: %s, (%d/%d) "%s", %s', stamp, i, count,
-                     user_submission.title, link)
+    # Filter down to the limit period
+    search_submissions = []
+    for s in user_submissions:
+        if s.created_utc > cutoff_time:
+            search_submissions.append(s)
     
-    # Include the post excluded earlier
-    count += 1
+    count = len(search_submissions)
+    for i, s in enumerate(search_submissions, 1):
+        stamp = time.strftime("%Y-%m-%d %H:%M:%S %Z",
+                              time.gmtime(s.created_utc))
+        link = 'https://redd.it/' + s.id
+        logging.info('Post history: %s, (%d/%d) "%s", %s', stamp, i, count,
+                     s.title, link)
+    
     logging.info('%d hour post count: %d', limit_hours, count)
     
     if count > limit_posts and POST_TEST_MODE:
