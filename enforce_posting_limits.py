@@ -173,6 +173,7 @@ def check_post_limits(subreddit, orig_submission, limit_hours, limit_posts):
                 "(" + msg_link + ") if you have questions or "
                 "concerns.*").format(limit_posts, limit_hours)
             notification = orig_submission.reply(reply_text)
+            notification.mod.distinguish('yes')
 
 
 if __name__ == '__main__':
