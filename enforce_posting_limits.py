@@ -151,7 +151,7 @@ def check_post_limits(subreddit, orig_submission, limit_hours, limit_posts):
         logging.info('Test mode is ON. Post not removed.')
     elif count > limit_posts and not POST_TEST_MODE:
         try:
-            submission.mod.remove()
+            orig_submission.mod.remove()
         except Exception as e:
             # If the login user isn't permitted to remove posts, don't stop
             if e.response.status_code == 403:
@@ -161,8 +161,8 @@ def check_post_limits(subreddit, orig_submission, limit_hours, limit_posts):
             else:
                 raise e
         else:
-            name = "u/" + submission.author.name
-            logging.info('"%s" removed.', submission.title)
+            name = "u/" + orig_submission.author.name
+            logging.info('"%s" removed.', orig_submission.title)
             msg_link = "/message/compose/?to=/" + subreddit._path
             reply_text = (
                 "Hi " + name + ",\n\n"
@@ -172,7 +172,7 @@ def check_post_limits(subreddit, orig_submission, limit_hours, limit_posts):
                 "Please [contact the moderators of this subreddit]"
                 "(" + msg_link + ") if you have questions or "
                 "concerns.*").format(limit_posts, limit_hours)
-            submission.reply(reply_text)
+            notification = orig_submission.reply(reply_text)
 
 
 if __name__ == '__main__':
