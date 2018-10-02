@@ -50,6 +50,7 @@ def check_subreddit(subreddit, post_limit_count, post_limit_hours):
 
     # The loop
     running = True
+    dots = 0
     while running:
         while True:
             try:
@@ -78,19 +79,22 @@ def check_subreddit(subreddit, post_limit_count, post_limit_hours):
                 pprint(vars(e))
                 time.sleep(120)
 
-        stamp = time.strftime("%Y-%m-%d %H:%M:%S %Z",
-                                time.localtime(search_time))
-        logging.info("New submission count is %d since %s", len(new_submissions),
-                    stamp)
-        
         if len(new_submissions) > 0:
+            if dots:
+                dots = 0
+                print('')
+            stamp = time.strftime("%Y-%m-%d %H:%M:%S %Z",
+                                  time.localtime(search_time))
+            logging.info("- New submission count is %d since %s", len(new_submissions),
+                        stamp)
+
             new_submissions.reverse()
             # Now they should be oldest first.
             for submission in new_submissions:
                 stamp = time.strftime("%Y-%m-%d %H:%M:%S %Z",
                                       time.localtime(submission.created_utc))
                 link = 'https://redd.it/' + submission.id
-                logging.info('New post: %s, "%s" by "%s", %s', stamp,
+                logging.info('-- New post: %s, "%s" by "%s", %s', stamp,
                              submission.title, submission.author.name, link)
                 
                 try:
@@ -104,6 +108,9 @@ def check_subreddit(subreddit, post_limit_count, post_limit_hours):
                     search_time = submission.created_utc
         else:
             search_time = time.time()
+            sys.stdout.write('.')
+            sys.stdout.flush()
+            dots = dots + 1
 
         try:
             time.sleep(loop_delay)
