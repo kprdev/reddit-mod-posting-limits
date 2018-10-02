@@ -122,7 +122,7 @@ def check_post_limits(subreddit, orig_submission, limit_hours, limit_posts):
     params = "author:" + username
     try:
         user_submissions = list(
-            subreddit.search(params, 'new', 'lucene', 'week')
+            subreddit.search(params, 'new', 'lucene', 'month')
         )
     except Exception as e:
         logging.error(e)
