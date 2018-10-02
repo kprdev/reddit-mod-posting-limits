@@ -8,6 +8,8 @@ from pprint import pprint
 
 # Set to True to test, posts won't be removed
 POST_TEST_MODE = False
+# Set to a discord webhook for announcements
+DISCORD_WEBHOOK_URL = None
 
 def main():
     # SET THESE - reddit application configuration
@@ -91,6 +93,9 @@ def check_subreddit(subreddit, post_limit_count, post_limit_hours):
             new_submissions.reverse()
             # Now they should be oldest first.
             for submission in new_submissions:
+                # Announce to discord
+                send_discord_webhook(submission)
+                
                 stamp = time.strftime("%Y-%m-%d %H:%M:%S %Z",
                                       time.localtime(submission.created_utc))
                 link = 'https://redd.it/' + submission.id
@@ -184,6 +189,51 @@ def check_post_limits(subreddit, orig_submission, limit_hours, limit_posts):
                 "concerns.*").format(limit_posts, limit_hours)
             notification = orig_submission.reply(reply_text)
             notification.mod.distinguish('yes')
+
+
+def send_discord_webhook(submission):
+    if not DISCORD_WEBHOOK_URL:
+        return
+    
+    import json
+    import requests
+
+    stamp = time.strftime("%Y-%m-%dT%H:%M:%SZ",
+                          time.gmtime(submission.created_utc))
+    author = '[{}](https://www.reddit.com/u/{})'.format(submission.author.name,
+        submission.author.name)
+    data = {'embeds':
+                [{
+                    'title': submission.title,
+                    'url': 'https://www.reddit.com'+submission.permalink,
+                    'timestamp': stamp,
+                    'fields': [
+                        {
+                            'name': 'Author',
+                            'value': author,
+                            'inline': 'true'
+                        },
+                        {
+                            'name': 'Image URL',
+                            'value': submission.url,
+                            'inline': 'true'
+                        }
+                    ],
+                    'image': {
+                        'url': submission.url
+                    }
+                }]
+            }
+
+    response = requests.post(
+        DISCORD_WEBHOOK_URL, data=json.dumps(data),
+        headers = {'Content-Type': 'application/json'}
+    )
+    if response.status_code != 204:
+        raise ValueError(
+            'Request to discord returned error %s, response is: %s'
+            % (response.status_code, response.text)
+        )
 
 
 if __name__ == '__main__':
