@@ -78,14 +78,17 @@ def check_subreddit(subreddit, post_limit_count, post_limit_hours):
                 pprint(vars(e))
                 time.sleep(120)
 
-        logging.debug("New submission count is %d", len(new_submissions))
+        stamp = time.strftime("%Y-%m-%d %H:%M:%S %Z",
+                                time.localtime(search_time))
+        logging.info("New submission count is %d since %s", len(new_submissions),
+                    stamp)
         
         if len(new_submissions) > 0:
             new_submissions.reverse()
             # Now they should be oldest first.
             for submission in new_submissions:
-                stamp = time.strftime("%a, %d %b %Y %H:%M:%S %Z",
-                                      time.gmtime(submission.created_utc))
+                stamp = time.strftime("%Y-%m-%d %H:%M:%S %Z",
+                                      time.localtime(submission.created_utc))
                 link = 'https://redd.it/' + submission.id
                 logging.info('New post: %s, "%s" by "%s", %s', stamp,
                              submission.title, submission.author.name, link)
@@ -138,7 +141,7 @@ def check_post_limits(subreddit, orig_submission, limit_hours, limit_posts):
     count = len(search_submissions)
     for i, s in enumerate(search_submissions, 1):
         stamp = time.strftime("%Y-%m-%d %H:%M:%S %Z",
-                              time.gmtime(s.created_utc))
+                              time.localtime(s.created_utc))
         link = 'https://redd.it/' + s.id
         logging.info('Post history: %s, (%d/%d) "%s", %s', stamp, i, count,
                      s.title, link)
