@@ -155,7 +155,7 @@ def check_post_limits(subreddit, orig_submission, limit_hours, limit_posts):
         stamp = time.strftime("%Y-%m-%d %H:%M:%S %Z",
                               time.localtime(s.created_utc))
         link = 'https://redd.it/' + s.id
-        logging.info('Post history: %s, (%d/%d) "%s", %s', stamp, i, count,
+        logging.info('Post history (%d/%d): %s, "%s", %s', i, count, stamp,
                      s.title, link)
     
     # Include the excluded post
