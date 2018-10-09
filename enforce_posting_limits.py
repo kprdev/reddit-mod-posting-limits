@@ -225,15 +225,17 @@ def send_discord_webhook(submission):
                 }]
             }
 
-    response = requests.post(
-        DISCORD_WEBHOOK_URL, data=json.dumps(data),
-        headers = {'Content-Type': 'application/json'}
-    )
-    if response.status_code != 204:
-        raise ValueError(
-            'Request to discord returned error %s, response is: %s'
-            % (response.status_code, response.text)
+    while True:
+        response = requests.post(
+            DISCORD_WEBHOOK_URL, data=json.dumps(data),
+            headers = {'Content-Type': 'application/json'}
         )
+        if response.status_code != 204:
+            logging.error('Request to discord returned error %s, response is: %s'
+                % (response.status_code, response.text))
+            time.sleep(10)
+            continue
+        break
 
 
 if __name__ == '__main__':
