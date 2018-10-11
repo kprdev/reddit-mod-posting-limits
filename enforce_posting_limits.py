@@ -52,7 +52,7 @@ def check_subreddit(subreddit, post_limit_count, post_limit_hours):
 
     # The loop
     running = True
-    dots = 0
+    dotter = Dotter(120)
     while running:
         while True:
             try:
@@ -82,9 +82,7 @@ def check_subreddit(subreddit, post_limit_count, post_limit_hours):
                 time.sleep(120)
 
         if len(new_submissions) > 0:
-            if dots:
-                dots = 0
-                print('')
+            dotter.reset()
             stamp = time.strftime("%Y-%m-%d %H:%M:%S %Z",
                                   time.localtime(search_time))
             logging.info("- New submission count is %d since %s", len(new_submissions),
@@ -113,9 +111,7 @@ def check_subreddit(subreddit, post_limit_count, post_limit_hours):
                     search_time = submission.created_utc
         else:
             search_time = time.time()
-            sys.stdout.write('.')
-            sys.stdout.flush()
-            dots = dots + 1
+            dotter.dot()
 
         try:
             time.sleep(loop_delay)
@@ -236,6 +232,33 @@ def send_discord_webhook(submission):
             time.sleep(10)
             continue
         break
+
+
+class Dotter:
+    """Show time passing with easy to read symbols."""
+    def __init__(self, seconds = 120):
+        self.count = 0
+        self.seconds_per_dot = seconds
+
+    def reset(self):
+        if self.count > 0:
+            self.count = 0
+            print('')
+
+    def dot(self):
+        self.count = self.count + 1
+        minutes = self.count * self.seconds_per_dot / 60
+        if minutes % 60 == 0:
+            sys.stdout.write('^')
+        elif minutes % 30 == 0:
+            sys.stdout.write('!')
+        elif minutes % 15 == 0:
+            sys.stdout.write('+')
+        elif minutes % 10 == 0:
+            sys.stdout.write(':')
+        else:
+            sys.stdout.write('.')
+        sys.stdout.flush()
 
 
 if __name__ == '__main__':
