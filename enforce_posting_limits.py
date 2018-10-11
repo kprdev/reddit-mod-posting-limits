@@ -6,6 +6,8 @@ import praw
 import prawcore
 from pprint import pprint
 
+submission_pool = []
+
 # Set to True to test, posts won't be removed
 POST_TEST_MODE = False
 # Set to a discord webhook for announcements
@@ -43,27 +45,37 @@ def main():
     check_subreddit(subreddit, post_limit_count, post_limit_hours)
 
 
+def filter_submissions(submissions, start_time, end_time = None, username = None):
+    """Return all submissions created after the start_time.
+        Optional: Also before end_time if given.
+        Optional: Also by username if given."""
+    filtered = []
+    for s in submissions:
+        if end_time and s.created_utc >= end_time:
+            continue
+        elif username and username != s.author.name:
+            continue
+        elif s.created_utc > start_time:
+            filtered.append(s)
+    return filtered
+
+
 def check_subreddit(subreddit, post_limit_count, post_limit_hours):
-    max_new_submissions = 25
+    global submission_pool
+    max_new_submissions = 100
     loop_delay = 119 # seconds
     
     # Initial search range will start 10m ago.
-    search_time = time.time() - (60*10)
+    #search_time = time.time() - (60*60*6)
 
     # The loop
     running = True
     dotter = Dotter(120)
     while running:
         while True:
+            submission_pool = []
             try:
                 submissions = subreddit.new(limit=max_new_submissions)
-                new_submissions = []
-                for submission in submissions:
-                    # New submissions will come in newest first.
-                    # Save the ones newer than last_new_post_time.
-                    if submission.created_utc > search_time:
-                        new_submissions.append(submission)
-                break
             except praw.exceptions.APIException as e:
                 logging.error('API Exception!')
                 pprint(vars(e))
@@ -80,6 +92,17 @@ def check_subreddit(subreddit, post_limit_count, post_limit_hours):
             except Exception as e:
                 pprint(vars(e))
                 time.sleep(120)
+            else:
+                for s in submissions:
+                    submission_pool.append(s)
+                if search_time:
+                    new_submissions = filter_submissions(submission_pool, search_time)
+                else:
+                    new_submissions = [ submission_pool[0] ]
+                    search_time = submission_pool[0].created_utc
+                # These start newest first. We want oldest first
+                new_submissions.reverse()
+                break
 
         if len(new_submissions) > 0:
             dotter.reset()
@@ -88,12 +111,10 @@ def check_subreddit(subreddit, post_limit_count, post_limit_hours):
             logging.info("- New submission count is %d since %s", len(new_submissions),
                         stamp)
 
-            new_submissions.reverse()
-            # Now they should be oldest first.
             for submission in new_submissions:
                 # Announce to discord
                 send_discord_webhook(submission)
-                
+
                 stamp = time.strftime("%Y-%m-%d %H:%M:%S %Z",
                                       time.localtime(submission.created_utc))
                 link = 'https://redd.it/' + submission.id
@@ -101,7 +122,7 @@ def check_subreddit(subreddit, post_limit_count, post_limit_hours):
                              submission.title, submission.author.name, link)
                 
                 try:
-                    check_post_limits(subreddit, submission, post_limit_hours,
+                    check_post_limits(submission, post_limit_hours,
                                       post_limit_count)
                 except praw.exceptions.APIException as e:
                     logging.error('API Exception!')
@@ -110,7 +131,7 @@ def check_subreddit(subreddit, post_limit_count, post_limit_hours):
                 else:
                     search_time = submission.created_utc
         else:
-            search_time = time.time()
+            #search_time = time.time()
             dotter.dot()
 
         try:
@@ -120,31 +141,16 @@ def check_subreddit(subreddit, post_limit_count, post_limit_hours):
             sys.exit(0)
 
 
-def check_post_limits(subreddit, orig_submission, limit_hours, limit_posts):
+def check_post_limits(orig_submission, limit_hours, limit_posts):
     buffer_seconds = 600
-    cutoff_time = (orig_submission.created_utc 
+    start_time = (orig_submission.created_utc 
                    - (limit_hours * 60 * 60) 
                    + buffer_seconds)
     username = orig_submission.author.name
+    subreddit = orig_submission.subreddit
     
-    params = "author:" + username
-    try:
-        user_submissions = list(
-            subreddit.search(params, 'new', 'lucene', 'month')
-        )
-    except Exception as e:
-        logging.error(e)
-        logging.error('Search failed!')
-        return
-    
-    # Filter down to the limit period
-    search_submissions = []
-    for s in user_submissions:
-        if (s.created_utc > cutoff_time
-            # Exclude the current post from the range check since reddit
-            # sometimes misses it (cache?). It will be added later.
-                and s.created_utc < orig_submission.created_utc):
-            search_submissions.append(s)
+    search_submissions = filter_submissions(submission_pool, start_time,
+        orig_submission.created_utc, username)
     
     count = len(search_submissions)
     for i, s in enumerate(search_submissions, 1):
